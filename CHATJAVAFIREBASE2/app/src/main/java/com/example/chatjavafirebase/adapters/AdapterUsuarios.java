@@ -1,8 +1,9 @@
 package com.example.chatjavafirebase.adapters;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Vibrator;
-import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,16 +11,16 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.chatjavafirebase.MensajesActivity;
 import com.example.chatjavafirebase.R;
-import com.example.chatjavafirebase.pojos.Users;
+import com.example.chatjavafirebase.Models.Solicitudes;
+import com.example.chatjavafirebase.Models.Users;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -37,6 +38,8 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
 
     FirebaseUser user= FirebaseAuth.getInstance().getCurrentUser();
     FirebaseDatabase database=FirebaseDatabase.getInstance();
+
+    SharedPreferences mPref;
 
     public AdapterUsuarios(List<Users> usersList, Context context) {
         this.usersList = usersList;
@@ -65,8 +68,8 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
             holder.cardView.setVisibility(View.VISIBLE);
         }
 
-        DatabaseReference ref_mis_botones=database.getReference("Users").child(user.getUid()).child("Solicitudes").child(userss.getId());
-        ref_mis_botones.addValueEventListener(new ValueEventListener() {
+        final DatabaseReference ref_mis_botones=database.getReference("Solicitudes").child(user.getUid());
+        ref_mis_botones.child(userss.getId()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
               String estado=dataSnapshot.child("estado").getValue(String.class);
@@ -114,12 +117,14 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
         holder.add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final DatabaseReference A=database.getReference("Users").child(user.getUid()).child("Solicitudes");
+                final DatabaseReference A=database.getReference("Solicitudes").child(user.getUid());
                 A.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                            A.child(userss.getId()).child("estado").setValue("enviado");
+                        Solicitudes sol=new Solicitudes("enviado","");
+
+                            A.child(userss.getId()).setValue(sol);
 
                     }
 
@@ -128,12 +133,13 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
 
                     }
                 });
-                final DatabaseReference B=database.getReference("Users").child(userss.getId()).child("Solicitudes");
+                final DatabaseReference B=database.getReference("Solicitudes").child(userss.getId());
                 B.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                            B.child(user.getUid()).child("estado").setValue("solicitud");
+                        Solicitudes sol=new Solicitudes("solicitud","");
+                            B.child(user.getUid()).setValue(sol);
 
                     }
 
@@ -143,7 +149,7 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
                     }
                 });
 
-                final DatabaseReference count=database.getReference("Users").child(userss.getId()).child("solicitudes");
+                final DatabaseReference count=database.getReference("Contador").child(userss.getId());
                 count.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -154,6 +160,8 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
                             }else{
                                 count.setValue(val+1);
                             }
+                        }else{
+                            count.setValue(1);
                         }
                     }
 
@@ -169,12 +177,14 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
        holder.tengosolicitud.setOnClickListener(new View.OnClickListener() {
            @Override
            public void onClick(View v) {
-               final DatabaseReference A=database.getReference("Users").child(user.getUid()).child("Solicitudes");
+               final String idchat=ref_mis_botones.push().getKey();
+
+               final DatabaseReference A=database.getReference("Solicitudes").child(userss.getId()).child(user.getUid());
                A.addListenerForSingleValueEvent(new ValueEventListener() {
                    @Override
                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                       A.child(userss.getId()).child("estado").setValue("amigos");
+                       Solicitudes sol=new Solicitudes("amigos",idchat);
+                       A.setValue(sol);
 
                    }
 
@@ -184,12 +194,12 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
                    }
                });
 
-               final DatabaseReference B=database.getReference("Users").child(userss.getId()).child("Solicitudes");
+               final DatabaseReference B=database.getReference("Solicitudes").child(user.getUid()).child(userss.getId());
                B.addListenerForSingleValueEvent(new ValueEventListener() {
                    @Override
                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                       B.child(user.getUid()).child("estado").setValue("amigos");
+                       Solicitudes sol=new Solicitudes("amigos",idchat);
+                       B.setValue(sol);
 
                    }
 
@@ -203,8 +213,35 @@ public class AdapterUsuarios extends RecyclerView.Adapter<AdapterUsuarios.viewHo
        });
        holder.amigos.setOnClickListener(new View.OnClickListener() {
            @Override
-           public void onClick(View v) {
-               Toast.makeText(context, "Ahora Somos Amigos", Toast.LENGTH_SHORT).show();
+           public void onClick(final View v) {
+               mPref=v.getContext().getSharedPreferences("usuario_sp",Context.MODE_PRIVATE);
+               final SharedPreferences.Editor editor=mPref.edit();
+
+
+               final DatabaseReference ref=database.getReference("Solicitudes").child(user.getUid()).child(userss.getId()).child("idchat");
+               ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                   @Override
+                   public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                       String id_unico=dataSnapshot.getValue(String.class);
+                       if(dataSnapshot.exists()){
+                           Intent intent=new Intent(v.getContext(), MensajesActivity.class);
+                           intent.putExtra("nombre",userss.getNombre());
+                           intent.putExtra("img_user",userss.getFoto());
+                           intent.putExtra("id_user",userss.getId());
+                           intent.putExtra("id_unico",id_unico);
+                           editor.putString("usuario_sp",userss.getId());
+                           editor.apply();
+                           v.getContext().startActivity(intent);
+                       }
+                   }
+
+                   @Override
+                   public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                   }
+               });
+
+
            }
        });
 

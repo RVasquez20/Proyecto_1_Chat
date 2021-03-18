@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:padding="8dp"
+    android:layout_height="wrap_content">
+<LinearLayout
+    android:orientation="vertical"
+    android:gravity="left"
+    android:layout_gravity="left"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content">>
+    <TextView
+        android:id="@+id/tv_mensaje"
+        android:padding="10dp"
+        android:background="@color/colorPrimary"
+        android:text="hola que tal"
+        android:textColor="@color/colorWhite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    </TextView>
+    <ImageView
+        android:id="@+id/mensaje_foto"
+        android:src="@drawable/ic_boton_enviar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    </ImageView>
+</LinearLayout>
+</RelativeLayout>
