@@ -3,6 +3,7 @@
     <item android:drawable="@color/cardview_light_background"/>
     <item>
         <bitmap android:src="@drawable/icono"
+
             android:gravity="center"/>
     </item>
 
